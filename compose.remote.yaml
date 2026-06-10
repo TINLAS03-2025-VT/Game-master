@@ -1,7 +1,7 @@
 services:
   wireguard-client:
     image: lscr.io/linuxserver/wireguard:latest
-    container_name: Game-master-wireguard-client
+    container_name: game-master-wireguard-client
     restart: unless-stopped
     cap_add:
       - NET_ADMIN
@@ -14,9 +14,9 @@ services:
       - ./wireguard-client:/config
       - /lib/modules:/lib/modules:ro
 
-  Game-master-node:
+  game-master:
     image: ghcr.io/tinlas03-2025-vt/game-master:latest
-    container_name: Game-master
+    container_name: game-master
     restart: unless-stopped
     network_mode: service:wireguard-client
     depends_on:
@@ -28,9 +28,11 @@ services:
       - ROS_LOCALHOST_ONLY=0
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - CYCLONEDDS_URI=file:///cyclonedds/client.xml
-      - NODE_NAME=ros_python_boilerplate
-      - HEARTBEAT_TOPIC=/boilerplate/heartbeat
-      - RELIABLE_QOS=true
+      - NODE_NAME=game_master
+      - COUNTER_TOPIC=/game_master/counter
+      - HEARTBEAT_TOPIC=/game_master/heartbeat
+      - INPUT_TOPIC=/game_master/input
+      - ROBOTS_POS_TOPIC=/robots/pos
       - TIMER_PERIOD_SEC=1.0
     command: >
       bash -lc "
@@ -38,10 +40,10 @@ services:
       until [ -e /sys/class/net/wg0 ] &&
             ip addr show wg0 | grep -q 'inet 10.13.13.' &&
             ip route get 10.13.13.1 >/dev/null 2>&1; do
-        echo 'Game-master waiting for contained wg0 and route to 10.13.13.1...';
+        echo 'game-master waiting for contained wg0 and route to 10.13.13.1...';
         sleep 1;
       done;
-      echo 'Game-master contained wg0 ready';
+      echo 'game-master contained wg0 ready';
       ip addr show wg0;
       exec python3 src/game_master_node.py
       "
