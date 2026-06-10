@@ -1,0 +1,49 @@
+services:
+  wireguard-client:
+    image: lscr.io/linuxserver/wireguard:latest
+    container_name: ros-boilerplate-wireguard-client
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/Amsterdam
+    volumes:
+      - ./wireguard-client:/config
+      - /lib/modules:/lib/modules:ro
+
+  ros-boilerplate-node:
+    image: ghcr.io/tinlas03-2025-vt/ros-python-sidecar-boilerplate:latest
+    container_name: ros-python-sidecar-boilerplate
+    restart: unless-stopped
+    network_mode: service:wireguard-client
+    depends_on:
+      - wireguard-client
+    volumes:
+      - ./cyclonedds:/cyclonedds:ro
+    environment:
+      - ROS_DOMAIN_ID=0
+      - ROS_LOCALHOST_ONLY=0
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - CYCLONEDDS_URI=file:///cyclonedds/client.xml
+      - NODE_NAME=ros_python_boilerplate
+      - SUB_TOPIC=/cam/pos
+      - PUB_TOPIC=/robots/pos
+      - HEARTBEAT_TOPIC=/boilerplate/heartbeat
+      - RELIABLE_QOS=true
+      - TIMER_PERIOD_SEC=1.0
+    command: >
+      bash -lc "
+      source /opt/ros/humble/setup.bash &&
+      until [ -e /sys/class/net/wg0 ] &&
+            ip addr show wg0 | grep -q 'inet 10.13.13.' &&
+            ip route get 10.13.13.1 >/dev/null 2>&1; do
+        echo 'ros-boilerplate waiting for contained wg0 and route to 10.13.13.1...';
+        sleep 1;
+      done;
+      echo 'ros-boilerplate contained wg0 ready';
+      ip addr show wg0;
+      exec python3 src/ros_boilerplate_node.py
+      "

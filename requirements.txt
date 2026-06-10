@@ -1,0 +1,2 @@
+# Add normal pip dependencies here.
+# ROS Python packages come from the ros:humble-ros-base image.

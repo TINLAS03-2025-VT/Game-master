@@ -1,0 +1,22 @@
+services:
+  ros-boilerplate-node:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/tinlas03-2025-vt/ros-python-sidecar-boilerplate:latest
+    container_name: ros-python-sidecar-boilerplate-local
+    network_mode: host
+    environment:
+      - ROS_DOMAIN_ID=0
+      - ROS_LOCALHOST_ONLY=0
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - NODE_NAME=ros_python_boilerplate
+      - SUB_TOPIC=/cam/pos
+      - PUB_TOPIC=/robots/pos
+      - HEARTBEAT_TOPIC=/boilerplate/heartbeat
+      - RELIABLE_QOS=true
+    command: >
+      bash -lc "
+      source /opt/ros/humble/setup.bash &&
+      exec python3 src/ros_boilerplate_node.py
+      "

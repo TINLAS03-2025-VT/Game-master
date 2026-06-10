@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Docker / local secrets
+wireguard-client/
+.env
+
+# Editor
+.vscode/
+.idea/

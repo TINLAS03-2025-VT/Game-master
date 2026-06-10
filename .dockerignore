@@ -1,0 +1,7 @@
+.git
+.github
+wireguard-client
+__pycache__
+*.pyc
+.env
+README.md
