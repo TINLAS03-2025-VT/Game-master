@@ -1,16 +1,18 @@
 <CycloneDDS>
-  <Domain>
+  <Domain id="any">
     <General>
-      <Interfaces>
-        <NetworkInterface name="wg0" priority="default" multicast="false"/>
-      </Interfaces>
+      <NetworkInterfaceAddress>wg0</NetworkInterfaceAddress>
       <AllowMulticast>false</AllowMulticast>
     </General>
     <Discovery>
-      <Peers>
-        <Peer address="10.13.13.1"/>
-      </Peers>
       <ParticipantIndex>auto</ParticipantIndex>
+      <Peers>
+        <Peer Address="10.13.13.1"/>
+      </Peers>
     </Discovery>
+    <Tracing>
+      <Verbosity>severe</Verbosity>
+      <OutputFile>stdout</OutputFile>
+    </Tracing>
   </Domain>
 </CycloneDDS>
