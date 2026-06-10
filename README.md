@@ -10,3 +10,20 @@ Default behavior:
 - publishes `/game_master/heartbeat` as `std_msgs/msg/String`
 - subscribes to `/game_master/input` as `std_msgs/msg/String`
 - subscribes to `/robots/pos` as `geometry_msgs/msg/PoseArray`
+
+## WireGuard config
+
+After cloning the repo, save your WireGuard peer config here:
+
+```text
+wireguard-client/wg_confs/wg0.conf
+```
+
+Example:
+
+```bash
+mkdir -p wireguard-client/wg_confs
+nano wireguard-client/wg_confs/wg0.conf
+```
+
+Do not commit `wireguard-client/`. It contains private keys and should stay ignored by Git.
