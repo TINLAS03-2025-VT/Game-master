@@ -19,4 +19,4 @@ RUN pip3 install --no-cache-dir -r /app/requirements.txt
 
 COPY src /app/src
 
-CMD ["python3", "src/ros_boilerplate_node.py"]
+CMD ["python3", "src/game_master_node.py"]

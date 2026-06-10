@@ -29,8 +29,6 @@ services:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - CYCLONEDDS_URI=file:///cyclonedds/client.xml
       - NODE_NAME=ros_python_boilerplate
-      - SUB_TOPIC=/cam/pos
-      - PUB_TOPIC=/robots/pos
       - HEARTBEAT_TOPIC=/boilerplate/heartbeat
       - RELIABLE_QOS=true
       - TIMER_PERIOD_SEC=1.0
@@ -45,5 +43,5 @@ services:
       done;
       echo 'Game-master contained wg0 ready';
       ip addr show wg0;
-      exec python3 src/ros_boilerplate_node.py
+      exec python3 src/game_master_node.py
       "
