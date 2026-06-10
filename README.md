@@ -67,7 +67,7 @@ ros2 topic echo /cam/pos
 ```bash
 docker compose -f compose.remote.yaml pull
 docker compose -f compose.remote.yaml up -d
-docker logs -f ros-python-sidecar-boilerplate
+docker logs -f Game-master
 ```
 
 Stop:
@@ -92,7 +92,7 @@ TIMER_PERIOD_SEC=1.0
 Default image name:
 
 ```text
-ghcr.io/tinlas03-2025-vt/ros-python-sidecar-boilerplate:latest
+ghcr.io/tinlas03-2025-vt/game-master:latest
 ```
 
 Change this in these files if your repo name is different:

@@ -21,7 +21,7 @@ on:
       - ".github/workflows/docker-image.yml"
 
 env:
-  IMAGE_NAME: ghcr.io/tinlas03-2025-vt/ros-python-sidecar-boilerplate
+  IMAGE_NAME: ghcr.io/tinlas03-2025-vt/game-master
 
 jobs:
   build:

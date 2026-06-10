@@ -1,7 +1,7 @@
 services:
   wireguard-client:
     image: lscr.io/linuxserver/wireguard:latest
-    container_name: ros-boilerplate-wireguard-client
+    container_name: Game-master-wireguard-client
     restart: unless-stopped
     cap_add:
       - NET_ADMIN
@@ -14,9 +14,9 @@ services:
       - ./wireguard-client:/config
       - /lib/modules:/lib/modules:ro
 
-  ros-boilerplate-test:
-    image: ghcr.io/tinlas03-2025-vt/ros-python-sidecar-boilerplate:latest
-    container_name: ros-python-sidecar-boilerplate-test
+  Game-master-test:
+    image: ghcr.io/tinlas03-2025-vt/game-master:latest
+    container_name: Game-master-test
     restart: "no"
     network_mode: service:wireguard-client
     depends_on:
@@ -35,10 +35,10 @@ services:
       until [ -e /sys/class/net/wg0 ] &&
             ip addr show wg0 | grep -q 'inet 10.13.13.' &&
             ip route get 10.13.13.1 >/dev/null 2>&1; do
-        echo 'ros-boilerplate-test waiting for contained wg0 and route to 10.13.13.1...';
+        echo 'Game-master-test waiting for contained wg0 and route to 10.13.13.1...';
         sleep 1;
       done;
-      echo 'ros-boilerplate-test contained wg0 ready';
+      echo 'Game-master-test contained wg0 ready';
       ip addr show wg0;
       exec python3 src/ros_self_test.py
       "

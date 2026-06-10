@@ -1,10 +1,10 @@
 services:
-  ros-boilerplate-node:
+  Game-master-node:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ghcr.io/tinlas03-2025-vt/ros-python-sidecar-boilerplate:latest
-    container_name: ros-python-sidecar-boilerplate-local
+    image: ghcr.io/tinlas03-2025-vt/game-master:latest
+    container_name: Game-master-local
     network_mode: host
     environment:
       - ROS_DOMAIN_ID=0
