@@ -10,8 +10,3 @@ Default behavior:
 - publishes `/game_master/heartbeat` as `std_msgs/msg/String`
 - subscribes to `/game_master/input` as `std_msgs/msg/String`
 - subscribes to `/robots/pos` as `geometry_msgs/msg/PoseArray`
-
-## Run locally without WireGuard
-
-```bash
-docker compose -f compose.local.yaml up --build
