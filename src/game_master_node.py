@@ -21,13 +21,14 @@ Environment variables:
 
 import os
 
+from typing import Sequence, cast
+
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
 
 from std_msgs.msg import String, UInt64
-from geometry_msgs.msg import PoseArray
-
+from geometry_msgs.msg import PoseArray, Pose
 
 def make_qos() -> QoSProfile:
     return QoSProfile(
@@ -116,7 +117,8 @@ class GameMasterNode(Node):
         )
 
         if pose_count > 0:
-            first = msg.poses[0]
+            poses = cast(Sequence[Pose], msg.poses)
+            first = poses[0]
             self.get_logger().info(
                 "First robot pose: "
                 f"x={first.position.x:.3f}, "
