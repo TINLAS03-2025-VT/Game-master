@@ -1,0 +1,25 @@
+{
+  "name": "Game-master ROS Humble",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": ".."
+  },
+  "workspaceFolder": "/workspaces/Game-master",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/bin/python3",
+        "python.analysis.extraPaths": [
+          "/opt/ros/humble/local/lib/python3.10/dist-packages",
+          "/opt/ros/humble/lib/python3.10/site-packages"
+        ]
+      }
+    }
+  },
+  "postCreateCommand": "bash -lc 'source /opt/ros/humble/setup.bash && python3 -c \"import rclpy; from std_msgs.msg import String, UInt64; from geometry_msgs.msg import PoseArray; print(\\\"ROS imports OK\\\")\"'"
+}
