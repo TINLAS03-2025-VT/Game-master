@@ -5,6 +5,35 @@
     "context": ".."
   },
   "workspaceFolder": "/workspaces/Game-master",
+
+  "containerEnv": {
+    "ROS_VERSION": "2",
+    "ROS_DISTRO": "humble",
+    "ROS_PYTHON_VERSION": "3",
+    "AMENT_PREFIX_PATH": "/opt/ros/humble",
+    "CMAKE_PREFIX_PATH": "/opt/ros/humble",
+    "COLCON_PREFIX_PATH": "/opt/ros/humble",
+    "LD_LIBRARY_PATH": "/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib",
+    "PYTHONPATH": "/opt/ros/humble/local/lib/python3.10/dist-packages:/opt/ros/humble/lib/python3.10/site-packages",
+    "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp",
+    "ROS_LOCALHOST_ONLY": "0",
+    "ROS_DOMAIN_ID": "0"
+  },
+
+  "remoteEnv": {
+    "ROS_VERSION": "2",
+    "ROS_DISTRO": "humble",
+    "ROS_PYTHON_VERSION": "3",
+    "AMENT_PREFIX_PATH": "/opt/ros/humble",
+    "CMAKE_PREFIX_PATH": "/opt/ros/humble",
+    "COLCON_PREFIX_PATH": "/opt/ros/humble",
+    "LD_LIBRARY_PATH": "/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib",
+    "PYTHONPATH": "/opt/ros/humble/local/lib/python3.10/dist-packages:/opt/ros/humble/lib/python3.10/site-packages",
+    "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp",
+    "ROS_LOCALHOST_ONLY": "0",
+    "ROS_DOMAIN_ID": "0"
+  },
+
   "customizations": {
     "vscode": {
       "extensions": [
@@ -21,5 +50,6 @@
       }
     }
   },
-  "postCreateCommand": "bash -lc 'source /opt/ros/humble/setup.bash && python3 -c \"import rclpy; from std_msgs.msg import String, UInt64; from geometry_msgs.msg import PoseArray; print(\\\"ROS imports OK\\\")\"'"
+
+  "postCreateCommand": "bash -lc 'echo \"source /opt/ros/humble/setup.bash\" >> ~/.bashrc && source /opt/ros/humble/setup.bash && python3 -c \"import rclpy; from std_msgs.msg import String, UInt64; from geometry_msgs.msg import PoseArray; print(\\\"ROS imports OK\\\")\"'"
 }
