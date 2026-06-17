@@ -1,0 +1,66 @@
+services:
+  wireguard-client:
+    image: lscr.io/linuxserver/wireguard:latest
+    container_name: game-master-dev-wireguard-client
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/Amsterdam
+    volumes:
+      - ../wireguard-client:/config
+      - /lib/modules:/lib/modules:ro
+
+  game-master-dev:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: game-master-dev
+    network_mode: service:wireguard-client
+    depends_on:
+      - wireguard-client
+    volumes:
+      - ..:/workspaces/Game-master:cached
+      - ../cyclonedds:/cyclonedds:ro
+    environment:
+      - ROS_DOMAIN_ID=0
+      - ROS_LOCALHOST_ONLY=0
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - CYCLONEDDS_URI=file:///cyclonedds/client.xml
+      - NODE_NAME=game_master
+      - COUNTER_TOPIC=/game_master/counter
+      - HEARTBEAT_TOPIC=/game_master/heartbeat
+      - INPUT_TOPIC=/game_master/input
+      - ROBOTS_POS_TOPIC=/unity/pos
+      - ROBOTS_READY_TOPIC=/game/robots/ready
+      - GAME_COMMAND_TOPIC=/game/command
+      - ROBOTS_SEEN_TOPIC=/robots/seen
+      - TIMER_PERIOD_SEC=0.2
+      - RUNNER_WIN_SECONDS=60.0
+      - CAUGHT_DISTANCE=1
+      - SEEN_DISTANCE=4.0
+      - SEEN_HALF_FOV_DEGREES=10.0
+      - ROS_VERSION=2
+      - ROS_DISTRO=humble
+      - ROS_PYTHON_VERSION=3
+      - AMENT_PREFIX_PATH=/opt/ros/humble
+      - CMAKE_PREFIX_PATH=/opt/ros/humble
+      - COLCON_PREFIX_PATH=/opt/ros/humble
+      - LD_LIBRARY_PATH=/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib
+      - PYTHONPATH=/opt/ros/humble/local/lib/python3.10/dist-packages:/opt/ros/humble/lib/python3.10/site-packages
+    command: >
+      bash -lc "
+      source /opt/ros/humble/setup.bash &&
+      until [ -e /sys/class/net/wg0 ] &&
+            ip addr show wg0 | grep -q 'inet 10.13.13.' &&
+            ip route get 10.13.13.1 >/dev/null 2>&1; do
+        echo 'game-master-dev waiting for contained wg0 and route to 10.13.13.1...';
+        sleep 1;
+      done;
+      echo 'game-master-dev contained wg0 ready';
+      ip addr show wg0;
+      sleep infinity
+      "

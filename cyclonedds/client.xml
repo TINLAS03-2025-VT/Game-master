@@ -4,13 +4,16 @@
       <NetworkInterfaceAddress>wg0</NetworkInterfaceAddress>
       <AllowMulticast>false</AllowMulticast>
     </General>
+
     <Discovery>
       <ParticipantIndex>auto</ParticipantIndex>
       <Peers>
         <Peer Address="10.13.13.1"/>
         <Peer Address="10.13.13.2"/>
+        <Peer Address="10.13.13.3"/>
       </Peers>
     </Discovery>
+
     <Tracing>
       <Verbosity>severe</Verbosity>
       <OutputFile>stdout</OutputFile>
