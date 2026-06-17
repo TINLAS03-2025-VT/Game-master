@@ -392,7 +392,7 @@ class GameMasterNode(Node):
             help="Manually publish that a robot can see the runner",
         )
         seen_parser.add_argument(
-            "bool",
+            "seen",
             type=int,
             choices=[0, 1],
             help="1 if hunters can see the runner, 0 if not",
@@ -573,34 +573,109 @@ class GameMasterNode(Node):
         return None
 
     def can_hunters_see_runner(self, runner_pose: Pose) -> bool:
-        for hunter_id in self.get_hunter_ids():
+        hunter_ids = sorted(self.get_hunter_ids())
+        known_pose_ids = sorted(self.robot_poses.keys())
+
+        runner_yaw = yaw_from_pose_degrees(runner_pose)
+
+        self.get_logger().info(
+            "========== SEEN CHECK =========="
+        )
+        self.get_logger().info(
+            f"runner_id={self.runner_id}, "
+            f"runner_seen_before={self.runner_seen}, "
+            f"runner_pos=({runner_pose.position.x:.3f}, {runner_pose.position.y:.3f}), "
+            f"runner_z_id={runner_pose.position.z:.1f}, "
+            f"runner_yaw={runner_yaw:.2f} deg"
+        )
+        self.get_logger().info(
+            f"hunters={hunter_ids}, known_pose_ids={known_pose_ids}, "
+            f"seen_distance={self.seen_distance:.3f}, "
+            f"lose_distance={self.lose_distance:.3f}, "
+            f"seen_half_fov_degrees={self.seen_half_fov_degrees:.3f}"
+        )
+
+        for hunter_id in hunter_ids:
             hunter_pose = self.robot_poses.get(hunter_id)
 
             if hunter_pose is None:
+                self.get_logger().info(
+                    f"hunter={hunter_id}: NO POSE, skipping"
+                )
                 continue
 
             distance = distance_between_poses(hunter_pose, runner_pose)
 
-            if self.runner_seen:
-                # When already seen, angle is irrelevant.
-                # Runner is still seen if ANY hunter is still close enough.
-                if distance <= self.lose_distance:
-                    return True
-                
-                continue
-
-            if distance > self.seen_distance:
-                continue
-
+            hunter_yaw = yaw_from_pose_degrees(hunter_pose)
+            angle_to_runner = angle_from_hunter_to_runner_degrees(hunter_pose, runner_pose)
             angle_error = hunter_angle_error_degrees(hunter_pose, runner_pose)
 
-            if abs(angle_error) <= self.seen_half_fov_degrees:
-                self.get_logger().debug(
-                    f"Hunter {hunter_id} sees runner {self.runner_id}: "
-                    f"distance={distance:.3f}, angle_error={angle_error:.3f} degrees"
-                )
-                return True
+            self.get_logger().info(
+                f"hunter={hunter_id}: "
+                f"pos=({hunter_pose.position.x:.3f}, {hunter_pose.position.y:.3f}), "
+                f"z_id={hunter_pose.position.z:.1f}, "
+                f"yaw={hunter_yaw:.2f} deg, "
+                f"angle_to_runner={angle_to_runner:.2f} deg, "
+                f"angle_error={angle_error:.2f} deg, "
+                f"distance={distance:.3f}"
+            )
 
+            if self.runner_seen:
+                self.get_logger().info(
+                    f"hunter={hunter_id}: already-seen mode, "
+                    f"angle ignored, checking distance <= lose_distance "
+                    f"({distance:.3f} <= {self.lose_distance:.3f})"
+                )
+
+                if distance <= self.lose_distance:
+                    self.get_logger().info(
+                        f"hunter={hunter_id}: STILL SEES runner because distance is close enough"
+                    )
+                    self.get_logger().info(
+                        "========== SEEN CHECK RESULT: TRUE =========="
+                    )
+                    return True
+
+                self.get_logger().info(
+                    f"hunter={hunter_id}: too far to keep seeing runner"
+                )
+                continue
+
+            self.get_logger().info(
+                f"hunter={hunter_id}: not-seen-yet mode, "
+                f"checking distance and angle"
+            )
+
+            if distance > self.seen_distance:
+                self.get_logger().info(
+                    f"hunter={hunter_id}: CANNOT SEE runner, "
+                    f"distance too far ({distance:.3f} > {self.seen_distance:.3f})"
+                )
+                continue
+
+            if abs(angle_error) > self.seen_half_fov_degrees:
+                self.get_logger().info(
+                    f"hunter={hunter_id}: CANNOT SEE runner, "
+                    f"angle outside FOV "
+                    f"(|{angle_error:.3f}| > {self.seen_half_fov_degrees:.3f})"
+                )
+                continue
+
+            self.get_logger().info(
+                f"hunter={hunter_id}: SEES runner, "
+                f"distance={distance:.3f}, angle_error={angle_error:.3f}"
+            )
+            self.get_logger().info(
+                "========== SEEN CHECK RESULT: TRUE =========="
+            )
+            return True
+
+        self.get_logger().info(
+            "No hunter sees runner."
+        )
+        self.get_logger().info(
+            "========== SEEN CHECK RESULT: FALSE =========="
+        )
         return False
 
     def enter_post_game(self, winner_text: str) -> None:

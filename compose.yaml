@@ -41,3 +41,36 @@ services:
       ip addr show wg0;
       exec python3 src/game_master_node.py
       "
+  robot-position-merger:
+    image: ghcr.io/tinlas03-2025-vt/game-master:latest
+    container_name: robot-position-merger
+    restart: unless-stopped
+    network_mode: service:wireguard-client
+    depends_on:
+      - wireguard-client
+    volumes:
+      - ./cyclonedds:/cyclonedds:ro
+    environment:
+      - ROS_DOMAIN_ID=0
+      - ROS_LOCALHOST_ONLY=0
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - CYCLONEDDS_URI=file:///cyclonedds/client.xml
+      - NODE_NAME=robot_position_merger
+      - UNITY_POS_TOPIC=/unity/pos
+      - CAM_POS_TOPIC=/cam/pos
+      - ROBOTS_POS_TOPIC=/robots/pos
+      - OUTPUT_FRAME_ID=map
+      - PUBLISH_RATE_HZ=10.0
+      - MAX_POSE_AGE_SEC=1.0
+    command: >
+      bash -lc "
+      source /opt/ros/humble/setup.bash &&
+      until [ -e /sys/class/net/wg0 ] &&
+            ip addr show wg0 | grep -q 'inet 10.13.13.' &&
+            ip route get 10.13.13.1 >/dev/null 2>&1; do
+        echo 'robot-position-merger waiting for contained wg0 and route to 10.13.13.1...';
+        sleep 1;
+      done;
+      echo 'robot-position-merger contained wg0 ready';
+      exec python3 src/robot_position_merger_node.py
+      "

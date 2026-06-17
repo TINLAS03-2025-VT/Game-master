@@ -34,11 +34,11 @@ services:
       - COUNTER_TOPIC=/game_master/counter
       - HEARTBEAT_TOPIC=/game_master/heartbeat
       - INPUT_TOPIC=/game_master/input
-      - ROBOTS_POS_TOPIC=/unity/pos
+      - ROBOTS_POS_TOPIC=/robots/pos
       - ROBOTS_READY_TOPIC=/game/robots/ready
       - GAME_COMMAND_TOPIC=/game/command
       - ROBOTS_SEEN_TOPIC=/robots/seen
-      - TIMER_PERIOD_SEC=0.2
+      - TIMER_PERIOD_SEC=0.1
       - RUNNER_WIN_SECONDS=60.0
       - CAUGHT_DISTANCE=1
       - SEEN_DISTANCE=4.0
