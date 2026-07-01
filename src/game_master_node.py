@@ -129,17 +129,18 @@ class GameMasterNode(Node):
         self.counter_topic = os.getenv("COUNTER_TOPIC", "/game_master/counter")
         self.heartbeat_topic = os.getenv("HEARTBEAT_TOPIC", "/game_master/heartbeat")
         self.input_topic = os.getenv("INPUT_TOPIC", "/game_master/input")
-        self.robots_pos_topic = os.getenv("ROBOTS_POS_TOPIC", "/unity/pos")
+        self.robots_pos_topic = os.getenv("ROBOTS_POS_TOPIC", "/robots/pos")
         self.robots_ready_topic = os.getenv("ROBOTS_READY_TOPIC", "/game/robots/ready")
         self.game_command_topic = os.getenv("GAME_COMMAND_TOPIC", "/game/command")
         self.robots_seen_topic = os.getenv("ROBOTS_SEEN_TOPIC", "/robots/seen")
 
-        self.timer_period_sec = float(os.getenv("TIMER_PERIOD_SEC", "0.2"))
-        self.runner_win_seconds = float(os.getenv("RUNNER_WIN_SECONDS", "60.0"))
-        self.caught_distance = float(os.getenv("CAUGHT_DISTANCE", "1"))
-        self.seen_distance = float(os.getenv("SEEN_DISTANCE", "4.0"))
-        self.lose_distance = float(os.getenv("LOSE_DISTANCE", "4.75"))
-        self.seen_half_fov_degrees = float(os.getenv("SEEN_HALF_FOV_DEGREES", "10.0"))
+        self.timer_period_sec = float(os.getenv("TIMER_PERIOD_SEC", "0.01"))
+        self.runner_win_seconds = float(os.getenv("RUNNER_WIN_SECONDS", "300.0"))
+        self.caught_distance = float(os.getenv("CAUGHT_DISTANCE", "1.2"))
+        self.seen_distance = float(os.getenv("SEEN_DISTANCE", "3.0"))
+        self.lose_distance = float(os.getenv("LOSE_DISTANCE", "3.5"))
+        self.seen_half_fov_degrees = float(os.getenv("SEEN_HALF_FOV_DEGREES", "20.0"))
+        self.caught_half_fov_degrees = float(os.getenv("CAUGHT_HALF_FOV_DEGREES", "45.0"))
 
         qos = make_qos()
 
@@ -458,6 +459,7 @@ class GameMasterNode(Node):
             return
 
         self.active_robot_ids = set(self.ready_robot_ids)
+        # self.runner_id = 104
         self.runner_id = random.choice(sorted(self.active_robot_ids))
         self.caught_by_robot_id = None
         self.winner_text = ""
@@ -563,32 +565,57 @@ class GameMasterNode(Node):
                 continue
 
             distance = distance_between_poses(hunter_pose, runner_pose)
+            angle_error = hunter_angle_error_degrees(hunter_pose, runner_pose)
 
-            if distance <= self.caught_distance:
-                self.get_logger().info(
-                    f"Runner caught: hunter={hunter_id}, runner={self.runner_id}, distance={distance:.3f}"
+            self.get_logger().debug(
+                f"Catch check: hunter={hunter_id}, "
+                f"runner={self.runner_id}, "
+                f"distance={distance:.3f}, "
+                f"caught_distance={self.caught_distance:.3f}, "
+                f"angle_error={angle_error:.2f} deg, "
+                f"allowed_fov=±{self.caught_half_fov_degrees:.2f} deg"
+            )
+
+            if distance > self.caught_distance:
+                continue
+
+            if abs(angle_error) > self.caught_half_fov_degrees:
+                self.get_logger().debug(
+                    f"Hunter {hunter_id} is close enough to catch runner {self.runner_id}, "
+                    f"but is not looking at the runner "
+                    f"(|{angle_error:.2f}| > {self.caught_half_fov_degrees:.2f})."
                 )
-                return hunter_id
+                continue
+
+            self.get_logger().info(
+                f"Runner caught: hunter={hunter_id}, "
+                f"runner={self.runner_id}, "
+                f"distance={distance:.3f}, "
+                f"angle_error={angle_error:.2f} deg"
+            )
+            return hunter_id
 
         return None
 
     def can_hunters_see_runner(self, runner_pose: Pose) -> bool:
+        # return True
+        
         hunter_ids = sorted(self.get_hunter_ids())
         known_pose_ids = sorted(self.robot_poses.keys())
 
         runner_yaw = yaw_from_pose_degrees(runner_pose)
 
-        self.get_logger().info(
+        self.get_logger().debug(
             "========== SEEN CHECK =========="
         )
-        self.get_logger().info(
+        self.get_logger().debug(
             f"runner_id={self.runner_id}, "
             f"runner_seen_before={self.runner_seen}, "
             f"runner_pos=({runner_pose.position.x:.3f}, {runner_pose.position.y:.3f}), "
             f"runner_z_id={runner_pose.position.z:.1f}, "
             f"runner_yaw={runner_yaw:.2f} deg"
         )
-        self.get_logger().info(
+        self.get_logger().debug(
             f"hunters={hunter_ids}, known_pose_ids={known_pose_ids}, "
             f"seen_distance={self.seen_distance:.3f}, "
             f"lose_distance={self.lose_distance:.3f}, "
@@ -599,7 +626,7 @@ class GameMasterNode(Node):
             hunter_pose = self.robot_poses.get(hunter_id)
 
             if hunter_pose is None:
-                self.get_logger().info(
+                self.get_logger().debug(
                     f"hunter={hunter_id}: NO POSE, skipping"
                 )
                 continue
@@ -610,7 +637,7 @@ class GameMasterNode(Node):
             angle_to_runner = angle_from_hunter_to_runner_degrees(hunter_pose, runner_pose)
             angle_error = hunter_angle_error_degrees(hunter_pose, runner_pose)
 
-            self.get_logger().info(
+            self.get_logger().debug(
                 f"hunter={hunter_id}: "
                 f"pos=({hunter_pose.position.x:.3f}, {hunter_pose.position.y:.3f}), "
                 f"z_id={hunter_pose.position.z:.1f}, "
@@ -621,59 +648,59 @@ class GameMasterNode(Node):
             )
 
             if self.runner_seen:
-                self.get_logger().info(
+                self.get_logger().debug(
                     f"hunter={hunter_id}: already-seen mode, "
                     f"angle ignored, checking distance <= lose_distance "
                     f"({distance:.3f} <= {self.lose_distance:.3f})"
                 )
 
                 if distance <= self.lose_distance:
-                    self.get_logger().info(
+                    self.get_logger().debug(
                         f"hunter={hunter_id}: STILL SEES runner because distance is close enough"
                     )
-                    self.get_logger().info(
+                    self.get_logger().debug(
                         "========== SEEN CHECK RESULT: TRUE =========="
                     )
                     return True
 
-                self.get_logger().info(
+                self.get_logger().debug(
                     f"hunter={hunter_id}: too far to keep seeing runner"
                 )
                 continue
 
-            self.get_logger().info(
+            self.get_logger().debug(
                 f"hunter={hunter_id}: not-seen-yet mode, "
                 f"checking distance and angle"
             )
 
             if distance > self.seen_distance:
-                self.get_logger().info(
+                self.get_logger().debug(
                     f"hunter={hunter_id}: CANNOT SEE runner, "
                     f"distance too far ({distance:.3f} > {self.seen_distance:.3f})"
                 )
                 continue
 
             if abs(angle_error) > self.seen_half_fov_degrees:
-                self.get_logger().info(
+                self.get_logger().debug(
                     f"hunter={hunter_id}: CANNOT SEE runner, "
                     f"angle outside FOV "
                     f"(|{angle_error:.3f}| > {self.seen_half_fov_degrees:.3f})"
                 )
                 continue
 
-            self.get_logger().info(
+            self.get_logger().debug(
                 f"hunter={hunter_id}: SEES runner, "
                 f"distance={distance:.3f}, angle_error={angle_error:.3f}"
             )
-            self.get_logger().info(
+            self.get_logger().debug(
                 "========== SEEN CHECK RESULT: TRUE =========="
             )
             return True
 
-        self.get_logger().info(
+        self.get_logger().debug(
             "No hunter sees runner."
         )
-        self.get_logger().info(
+        self.get_logger().debug(
             "========== SEEN CHECK RESULT: FALSE =========="
         )
         return False
