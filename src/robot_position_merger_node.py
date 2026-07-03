@@ -40,7 +40,7 @@ class RobotPositionMergerNode(Node):
         self.output_frame_id = os.getenv("OUTPUT_FRAME_ID", "map")
 
         self.publish_rate_hz = float(os.getenv("PUBLISH_RATE_HZ", "60.0"))
-        self.pose_timeout_sec = float(os.getenv("POSE_TIMEOUT_SEC", "2.0"))
+        self.pose_timeout_sec = float(os.getenv("POSE_TIMEOUT_SEC", "2.0")) # JvV review: Mismatch with the compose.yaml, should be MAX_POSE_AGE_SEC or vice versa
 
         if self.publish_rate_hz <= 0.0:
             raise ValueError("PUBLISH_RATE_HZ must be greater than 0")
@@ -190,7 +190,7 @@ class RobotPositionMergerNode(Node):
     ) -> None:
         stale_robot_ids: list[int] = []
 
-        for robot_id, stored_pose in list(source_poses.items()):
+        for robot_id, stored_pose in list(source_poses.items()):# JvV review: Looping over array in a thread, while other thread can add poses at any time. Can cause an error to be thrown.
             age_sec = now_sec - stored_pose.last_update_sec
 
             if age_sec > self.pose_timeout_sec:
@@ -209,7 +209,7 @@ class RobotPositionMergerNode(Node):
         merged_poses_by_id: dict[int, Pose] = {}
 
         # Unity first
-        for robot_id, stored_pose in self.unity_poses_by_id.items():
+        for robot_id, stored_pose in self.unity_poses_by_id.items(): # JvV review: Looping over array in a thread, while other thread can add poses at any time. Can cause an error to be thrown.
             merged_poses_by_id[robot_id] = deepcopy(stored_pose.pose)
 
         # Cam overwrites duplicate IDs
@@ -217,7 +217,7 @@ class RobotPositionMergerNode(Node):
             set(self.unity_poses_by_id.keys()) & set(self.cam_poses_by_id.keys())
         )
 
-        for robot_id, stored_pose in self.cam_poses_by_id.items():
+        for robot_id, stored_pose in self.cam_poses_by_id.items():# JvV review: Looping over array in a thread, while other thread can add poses at any time. Can cause an error to be thrown.
             merged_poses_by_id[robot_id] = deepcopy(stored_pose.pose)
 
         current_robot_ids = set(merged_poses_by_id.keys())

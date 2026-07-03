@@ -20,7 +20,7 @@ ROS topics:
 - Publishes /game_master/counter       std_msgs/msg/UInt64
 - Publishes /game_master/heartbeat     std_msgs/msg/String
 - Publishes /game/command              std_msgs/msg/String
-- Publishes /robots/seen               std_msgs/msg/Int32
+- Publishes /robots/seen               std_msgs/msg/Int32   # JvV review: Not consistent with actual publish topic. This should be an Bool or it should be changed to an Int32
 - Subscribes /game_master/input        std_msgs/msg/String
 - Subscribes /game/robots/ready        std_msgs/msg/Int32
 - Subscribes /robots/pos               geometry_msgs/msg/PoseArray
@@ -88,7 +88,7 @@ def distance_between_poses(first: Pose, second: Pose) -> float:
     return math.sqrt((dx * dx) + (dy * dy))
 
 
-def normalize_angle_degrees(angle: float) -> float:
+def normalize_angle_degrees(angle: float) -> float: # Nit JvV review: Could be made more efficient by using modulo
     while angle > 180.0:
         angle -= 360.0
 
@@ -147,7 +147,7 @@ class GameMasterNode(Node):
         self.counter_pub = self.create_publisher(UInt64, self.counter_topic, qos)
         self.heartbeat_pub = self.create_publisher(String, self.heartbeat_topic, qos)
         self.game_command_pub = self.create_publisher(String, self.game_command_topic, qos)
-        self.robots_seen_pub = self.create_publisher(Bool, self.robots_seen_topic, qos)
+        self.robots_seen_pub = self.create_publisher(Bool, self.robots_seen_topic, qos) # JvV review: Not consistent with intro comments. This should be an Int32 or it should be changed to correctly describe this topic
 
         self.input_sub = self.create_subscription(
             String,
@@ -185,7 +185,7 @@ class GameMasterNode(Node):
         self.caught_by_robot_id: int | None = None
         self.winner_text = ""
 
-        self.last_seen = time.monotonic()
+        self.last_seen = time.monotonic() # JvV review: Not used anywhere
         self.runner_seen: bool = False
 
         self.active_running_seconds = 0.0
@@ -240,11 +240,11 @@ class GameMasterNode(Node):
                 if key in ("\n", "\r"):
                     self.command_queue.put("start")
                 elif key == " ":
-                    if self.state == GameState.RUNNING:
+                    if self.state == GameState.RUNNING: # JvV review: Could cause tiny race conditions, since the reading and other writing happens on different threads
                         self.command_queue.put("pause")
                     elif self.state == GameState.PAUSE:
                         self.command_queue.put("resume")
-                elif key.lower() == "~":
+                elif key.lower() == "~": # JvV review: Should be r, considering the message sent by the GameMasterNode __init__
                     self.command_queue.put("reset")
                 elif key.lower() == "q":
                     self.get_logger().info("Quit requested from keyboard.")
@@ -459,7 +459,7 @@ class GameMasterNode(Node):
             return
 
         self.active_robot_ids = set(self.ready_robot_ids)
-        # self.runner_id = 104
+        # self.runner_id = 104 # JvV review: Can be removed
         self.runner_id = random.choice(sorted(self.active_robot_ids))
         self.caught_by_robot_id = None
         self.winner_text = ""
@@ -514,7 +514,7 @@ class GameMasterNode(Node):
         self.last_loop_time = time.monotonic()
 
         self.runner_seen = False
-        self.last_seen = time.monotonic()
+        self.last_seen = time.monotonic() # JvV review: Not used anywhere
 
         self.get_logger().info("Game reset. State is WAIT.")
         self.print_ready_robots()
@@ -559,7 +559,7 @@ class GameMasterNode(Node):
 
     def find_hunter_that_caught_runner(self, runner_pose: Pose) -> int | None:
         for hunter_id in self.get_hunter_ids():
-            hunter_pose = self.robot_poses.get(hunter_id)
+            hunter_pose = self.robot_poses.get(hunter_id) # JvV review: Accessing the robot_poses that gets changed in another thread, could lead to some up to date and other not up to date robot poses being used
 
             if hunter_pose is None:
                 continue

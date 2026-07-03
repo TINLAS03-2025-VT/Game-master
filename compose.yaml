@@ -61,7 +61,7 @@ services:
       - ROBOTS_POS_TOPIC=/robots/pos
       - OUTPUT_FRAME_ID=map
       - PUBLISH_RATE_HZ=10.0
-      - MAX_POSE_AGE_SEC=1.0
+      - MAX_POSE_AGE_SEC=1.0 # JvV review: Mismatch with the robot_position_merger_node, should be POSE_TIMEOUT_SEC or vice versa
     command: >
       bash -lc "
       source /opt/ros/humble/setup.bash &&
