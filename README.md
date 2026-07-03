@@ -95,8 +95,6 @@ The normal project deployment starts the Game Master and Robot Position Merger f
 | `PUBLISH_RATE_HZ` | `60.0` source default, `10.0` in standalone compose | Output publish rate. |
 | `POSE_TIMEOUT_SEC` | `2.0` | Removes stale Unity/camera poses after this time. |
 
-`MAX_POSE_AGE_SEC` appears in the standalone compose file but is not read by the current source code. The active timeout variable is `POSE_TIMEOUT_SEC`.
-
 ## Commands and actions
 
 ### Keyboard controls
